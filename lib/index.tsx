@@ -23,7 +23,7 @@ async function svg2Font({
   dist = '',
   fontName = 'svg2font',
   fontFamily = 'svg2font',
-  fontFamilyClass = 'font_family',
+  fontFamilyClass = 'font-family',
   fontCdnUrl = '',
   startCodePoint = 57344,
   customUnicodeList,
@@ -35,6 +35,7 @@ async function svg2Font({
   fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'],
   svgSize = (1/1.8),
   copyright = 'Copyright (C)',
+  scss = true,
 }) {
 
   // const files = Glob.sync(src, {}) || []
@@ -62,7 +63,7 @@ async function svg2Font({
 	copyright,
   })
 
-  return font.convertFonts({dist, fontTypes, css, symbol, html, fontCdnUrl})
+  return font.convertFonts({dist, fontTypes, css, symbol, html, fontCdnUrl, scss})
 }
 export { svg2Font, Font }
 

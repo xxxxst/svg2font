@@ -56,7 +56,39 @@ export function fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass
   return CSSTMPL
 }
 
-
+export function fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs = [], fontCdnUrl = '') {
+	const CSSTMPL = `
+	%ex-${fontFamilyClass}-face {
+	  font-family: '${fontFamily}';
+	  ${fontTypes.includes('eot') && `src: url('${fontCdnUrl}${fontName}.eot'); /* IE9 */`}
+	  src: ${fontTypes.map(item => {
+		if(item == 'eot'){
+		  return `url('${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype') /* IE6-IE8 */`
+		}else if(item == 'woff2'){
+		  return `url('${fontCdnUrl}${fontName}.woff2') format('woff2') /* chrome、firefox */`
+		}else if(item == 'woff'){
+		  return `url('${fontCdnUrl}${fontName}.woff') format('woff') /* chrome、firefox */`
+		}else if(item == 'ttf'){
+		  return `url('${fontCdnUrl}${fontName}.ttf') format('truetype') /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`
+		}else if(item == 'svg'){
+		  return `url('${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg') /* iOS 4.1- */`
+		}
+	  }).join(',\n\t\t')};
+	}
+  
+	%ex-${fontFamilyClass}{
+	  font-family: '${fontFamily}';
+	  font-size: 16px;
+	  font-style: normal;
+	  -webkit-font-smoothing: antialiased;
+	  -moz-osx-font-smoothing: grayscale;
+	}
+	${ glyphs.map(({glyphName, unicode}) => `
+	%ex-${fontName}-${glyphName} {
+	  content: "\\${unicode}";
+	}`).join('\n')}`
+	return CSSTMPL
+  }
 
 export function svgSymbolTemplate(fontTypes, fontName, glyphs = []) {
   const SYMBOLTMPL = `

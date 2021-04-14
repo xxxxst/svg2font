@@ -15,7 +15,7 @@ const ttf2woff = require('ttf2woff')
 const ttf2woff2 = require('ttf2woff2')
 
 
-import { fontTemplate, fontCSSTemplate, svgSymbolTemplate, htmlTemplate, AndroidTemplate, iOSTemplate, RNTemplate } from "./template";
+import { fontTemplate, fontCSSTemplate, fontSCSSTemplate, svgSymbolTemplate, htmlTemplate, AndroidTemplate, iOSTemplate, RNTemplate } from "./template";
 
 // font attribute doc
 // https://www.w3.org/TR/1999/WD-SVG-19991203/fonts.html#FontElementAscentAttribute
@@ -213,7 +213,7 @@ export default class Font {
     return ttf2woff2(ttfBuffer)
   }
 
-  convertFonts ({dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = ''}) {
+  convertFonts ({dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = '', scss = true}) {
     const fontName = this.fontName
     const fontFamily = this.fontFamily
     const fontFamilyClass = this.fontFamilyClass
@@ -241,6 +241,11 @@ export default class Font {
     if(css && fontTypes.length > 0){
       const CSSTMPL = fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs, fontCdnUrl)
       fs.writeFileSync(path.join(dist, `${fontName}.css`), CSSTMPL)
+    }
+
+    if(scss && fontTypes.length > 0){
+      const CSSTMPL = fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs, fontCdnUrl)
+      fs.writeFileSync(path.join(dist, `${fontName}.scss`), CSSTMPL)
     }
 
     if(symbol && fontTypes.length > 0){

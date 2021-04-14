@@ -153,6 +153,43 @@ function fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyph
   }`).join('\n')}`;
     return CSSTMPL;
 }
+function fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs = [], fontCdnUrl = '') {
+    const CSSTMPL = `
+	%ex-${fontFamilyClass}-face {
+	  font-family: '${fontFamily}';
+	  ${fontTypes.includes('eot') && `src: url('${fontCdnUrl}${fontName}.eot'); /* IE9 */`}
+	  src: ${fontTypes.map(item => {
+        if (item == 'eot') {
+            return `url('${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype') /* IE6-IE8 */`;
+        }
+        else if (item == 'woff2') {
+            return `url('${fontCdnUrl}${fontName}.woff2') format('woff2') /* chrome、firefox */`;
+        }
+        else if (item == 'woff') {
+            return `url('${fontCdnUrl}${fontName}.woff') format('woff') /* chrome、firefox */`;
+        }
+        else if (item == 'ttf') {
+            return `url('${fontCdnUrl}${fontName}.ttf') format('truetype') /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`;
+        }
+        else if (item == 'svg') {
+            return `url('${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg') /* iOS 4.1- */`;
+        }
+    }).join(',\n\t\t')};
+	}
+  
+	%ex-${fontFamilyClass}{
+	  font-family: '${fontFamily}';
+	  font-size: 16px;
+	  font-style: normal;
+	  -webkit-font-smoothing: antialiased;
+	  -moz-osx-font-smoothing: grayscale;
+	}
+	${glyphs.map(({ glyphName, unicode }) => `
+	%ex-${fontName}-${glyphName} {
+	  content: "\\${unicode}";
+	}`).join('\n')}`;
+    return CSSTMPL;
+}
 function svgSymbolTemplate(fontTypes, fontName, glyphs = []) {
     const SYMBOLTMPL = `
   (function (document) {
@@ -1086,7 +1123,7 @@ class Font {
         const ttfBuffer = this.getTTF();
         return ttf2woff2(ttfBuffer);
     }
-    convertFonts({ dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = '' }) {
+    convertFonts({ dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = '', scss = true }) {
         const fontName = this.fontName;
         const fontFamily = this.fontFamily;
         const fontFamilyClass = this.fontFamilyClass;
@@ -1113,6 +1150,10 @@ class Font {
         if (css && fontTypes.length > 0) {
             const CSSTMPL = fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs, fontCdnUrl);
             fs$1.writeFileSync(path.join(dist, `${fontName}.css`), CSSTMPL);
+        }
+        if (scss && fontTypes.length > 0) {
+            const CSSTMPL = fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs, fontCdnUrl);
+            fs$1.writeFileSync(path.join(dist, `${fontName}.scss`), CSSTMPL);
         }
         if (symbol && fontTypes.length > 0) {
             const SYMBOLTMPL = svgSymbolTemplate(fontTypes, fontName, glyphs);
@@ -1145,7 +1186,7 @@ const getFileList = (pattern, options = {}) => {
     });
     return promise;
 };
-function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], svgSize = (1 / 1.8), copyright = 'Copyright (C)', }) {
+function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font-family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], svgSize = (1 / 1.8), copyright = 'Copyright (C)', scss = true, }) {
     return __awaiter(this, void 0, void 0, function* () {
         // const files = Glob.sync(src, {}) || []
         const files = yield getFileList(src);
@@ -1169,7 +1210,7 @@ function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'sv
             svgSize,
             copyright,
         });
-        return font.convertFonts({ dist, fontTypes, css, symbol, html, fontCdnUrl });
+        return font.convertFonts({ dist, fontTypes, css, symbol, html, fontCdnUrl, scss });
     });
 }
 
