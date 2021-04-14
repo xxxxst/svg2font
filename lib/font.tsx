@@ -23,7 +23,8 @@ const DEFAULT_CONFIG = {
   font: {
     id: 'svg2font',
     horizAdvX: 1024,
-    vertAdvY: 1024,
+	vertAdvY: 1024,
+	copyright: 'Copyright (C)',
   },
   fontface: {
     fontFamily: 'svg2font',
@@ -51,6 +52,7 @@ export default class Font {
   public ascent;
   public descent;
   public svgSize;
+  public copyright;
   constructor ({
     fontName = 'svg2font',
     fontFamily = 'svg2font',
@@ -60,7 +62,8 @@ export default class Font {
     descent = -128,
     startCodePoint = 57344,
 	customUnicodeList,
-	svgSize
+	svgSize,
+	copyright
   }) {
     this.fontName = fontName
     this.fontFamily = fontFamily
@@ -69,10 +72,12 @@ export default class Font {
     this.descent = descent
 
 	this.svgSize = svgSize || (1/1.8);
+	this.copyright = copyright || 'Copyright (C)';
     this.glyphs = this.createGlyphs(glyphSvgs, startCodePoint, customUnicodeList)
     const CONFIG = _.merge(DEFAULT_CONFIG, {
       font: {
-        id: fontName
+		id: fontName,
+		copyright: copyright,
       },
       fontface: {
         fontFamily: fontName,
@@ -188,7 +193,7 @@ export default class Font {
 
   getTTF () {
     const ttfBuffer = Buffer.from(svg2ttf(this.svgFont, {
-      copyright: 'Copyright (C) 2019 by original authors @ master Gao'
+      copyright: this.copyright
     }).buffer)
     return ttfBuffer
   }
@@ -251,7 +256,7 @@ export default class Font {
     const ANDROIDTMPL = AndroidTemplate(fontName, glyphs)
     fs.writeFileSync(path.join(dist, `icon_${fontFamily}.xml`), ANDROIDTMPL)
 
-    const IOSTMPL = iOSTemplate(fontFamily, glyphs)
+    const IOSTMPL = iOSTemplate(fontFamily, glyphs, this.copyright)
     fs.writeFileSync(path.join(dist, `JDIF_${fontFamily.replace(fontFamily[0], fontFamily[0].toUpperCase())}.h`), IOSTMPL)
 
     const RNTMPL = RNTemplate(fontFamily, glyphs)

@@ -34,6 +34,7 @@ async function svg2Font({
   html = true,
   fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'],
   svgSize = (1/1.8),
+  copyright = 'Copyright (C)',
 }) {
 
   // const files = Glob.sync(src, {}) || []
@@ -58,6 +59,7 @@ async function svg2Font({
     startCodePoint,
 	customUnicodeList,
 	svgSize,
+	copyright,
   })
 
   return font.convertFonts({dist, fontTypes, css, symbol, html, fontCdnUrl})

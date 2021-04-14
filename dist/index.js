@@ -105,7 +105,7 @@ function fontTemplate(DEFAULT_CONFIG) {
     const TMPL = `<?xml version="1.0" standalone="no"?>
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg xmlns="http://www.w3.org/2000/svg">
-      <metadata>Copyright (C) 2019 by original authors @ master Gao</metadata>
+      <metadata>${font.copyright}</metadata>
       <defs>
         <font id="${font.id}" horiz-adv-x="${font.horizAdvX}" vert-adv-y="${font.vertAdvY}" >
           <font-face font-family="${fontface.fontFamily}" font-weight="${fontface.fontWeight}" font-stretch="${fontface.fontStretch}" units-per-em="${fontface.unitsPerEm}" ascent="${fontface.ascent}" descent="${fontface.descent}" />
@@ -885,7 +885,7 @@ function AndroidTemplate(fontName, glyphs = []) {
   </resources>`;
     return AndroidTMPL;
 }
-function iOSTemplate(fontFamily, glyphs = []) {
+function iOSTemplate(fontFamily, glyphs = [], copyright = "Copyright (C)") {
     const upCaseFontFamily = fontFamily.replace(fontFamily[0], fontFamily[0].toUpperCase());
     const iOSTMPL = `
   //
@@ -893,7 +893,7 @@ function iOSTemplate(fontFamily, glyphs = []) {
   // fontFamily:${fontFamily}
   //
   // Version 1.0
-  // Copyright (C) 2019 by original authors @ master Gao
+  // ${copyright}
   //
 
   #ifndef JDIF_${upCaseFontFamily}_H
@@ -932,6 +932,7 @@ const DEFAULT_CONFIG = {
         id: 'svg2font',
         horizAdvX: 1024,
         vertAdvY: 1024,
+        copyright: 'Copyright (C)',
     },
     fontface: {
         fontFamily: 'svg2font',
@@ -950,17 +951,19 @@ const DEFAULT_CONFIG = {
  * @support svg, ttf, eot, woff, woff2
  */
 class Font {
-    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList, svgSize }) {
+    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList, svgSize, copyright }) {
         this.fontName = fontName;
         this.fontFamily = fontFamily;
         this.fontFamilyClass = fontFamilyClass;
         this.ascent = ascent;
         this.descent = descent;
         this.svgSize = svgSize || (1 / 1.8);
+        this.copyright = copyright || 'Copyright (C)';
         this.glyphs = this.createGlyphs(glyphSvgs, startCodePoint, customUnicodeList);
         const CONFIG = _.merge(DEFAULT_CONFIG, {
             font: {
-                id: fontName
+                id: fontName,
+                copyright: copyright,
             },
             fontface: {
                 fontFamily: fontName,
@@ -1067,7 +1070,7 @@ class Font {
     }
     getTTF() {
         const ttfBuffer = Buffer.from(svg2ttf(this.svgFont, {
-            copyright: 'Copyright (C) 2019 by original authors @ master Gao'
+            copyright: this.copyright
         }).buffer);
         return ttfBuffer;
     }
@@ -1121,7 +1124,7 @@ class Font {
         }
         const ANDROIDTMPL = AndroidTemplate(fontName, glyphs);
         fs$1.writeFileSync(path.join(dist, `icon_${fontFamily}.xml`), ANDROIDTMPL);
-        const IOSTMPL = iOSTemplate(fontFamily, glyphs);
+        const IOSTMPL = iOSTemplate(fontFamily, glyphs, this.copyright);
         fs$1.writeFileSync(path.join(dist, `JDIF_${fontFamily.replace(fontFamily[0], fontFamily[0].toUpperCase())}.h`), IOSTMPL);
         const RNTMPL = RNTemplate(fontFamily, glyphs);
         fs$1.writeFileSync(path.join(dist, `icon_${fontFamily}.js`), RNTMPL);
@@ -1142,7 +1145,7 @@ const getFileList = (pattern, options = {}) => {
     });
     return promise;
 };
-function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], svgSize = (1 / 1.8), }) {
+function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], svgSize = (1 / 1.8), copyright = 'Copyright (C)', }) {
     return __awaiter(this, void 0, void 0, function* () {
         // const files = Glob.sync(src, {}) || []
         const files = yield getFileList(src);
@@ -1164,6 +1167,7 @@ function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'sv
             startCodePoint,
             customUnicodeList,
             svgSize,
+            copyright,
         });
         return font.convertFonts({ dist, fontTypes, css, symbol, html, fontCdnUrl });
     });
