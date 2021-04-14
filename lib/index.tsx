@@ -6,7 +6,7 @@ import createUnicodes from './unicodes'
 import Font from './font'
 
 const getFileList = (pattern, options = {}) => {
-  const promise = new Promise((resolve, reject) => {
+  const promise = new Promise<string[]>((resolve, reject) => {
     Glob(pattern, options, (err, files:string[]) => {
       if(err){
         console.error(err)
@@ -33,6 +33,7 @@ async function svg2Font({
   symbol = true,
   html = true,
   fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'],
+  svgSize = (1/1.8),
 }) {
 
   // const files = Glob.sync(src, {}) || []
@@ -55,7 +56,8 @@ async function svg2Font({
     ascent,
     descent,
     startCodePoint,
-    customUnicodeList,
+	customUnicodeList,
+	svgSize,
   })
 
   return font.convertFonts({dist, fontTypes, css, symbol, html, fontCdnUrl})

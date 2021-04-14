@@ -950,12 +950,13 @@ const DEFAULT_CONFIG = {
  * @support svg, ttf, eot, woff, woff2
  */
 class Font {
-    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList }) {
+    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList, svgSize }) {
         this.fontName = fontName;
         this.fontFamily = fontFamily;
         this.fontFamilyClass = fontFamilyClass;
         this.ascent = ascent;
         this.descent = descent;
+        this.svgSize = svgSize || (1 / 1.8);
         this.glyphs = this.createGlyphs(glyphSvgs, startCodePoint, customUnicodeList);
         const CONFIG = _.merge(DEFAULT_CONFIG, {
             font: {
@@ -1018,21 +1019,45 @@ class Font {
     getGlyphData(data, ascent) {
         let d1 = ''; // font fontcss
         let d2 = []; // symbol originD list
+        var d = '';
         const Node = new DOMParser().parseFromString(data, 'application/xml');
         Array.from(Node.documentElement.childNodes).map((node) => {
             if (node.nodeName.toUpperCase() === 'PATH' && node.hasAttribute && node.hasAttribute('d')) {
+                if (node.hasAttribute('fill') && node.getAttribute('fill') == "none") {
+                    return;
+                }
+                d = node.getAttribute('d');
                 d2.push({
-                    d: svgpath(node.getAttribute('d')).rel().round(2).toString(),
+                    d: svgpath(d).rel().round(2).toString(),
                     fill: node.getAttribute('fill') || ''
                 });
-                // SVG字体与标准图形坐标系不一致 https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty
-                const signalD = svgpath(node.getAttribute('d')).rel().round(2).scale(1, -1).translate(0, ascent).toString();
-                if (!/z$/.test(signalD)) {
-                    d1 += signalD + 'z';
+            }
+            else if (node.nodeName.toLowerCase() === 'circle' && node.hasAttribute) {
+                var cx = node.getAttribute("cx");
+                var cy = node.getAttribute("cy");
+                var r = node.getAttribute("r");
+                var rx = node.getAttribute("rx");
+                var ry = node.getAttribute("ry");
+                if (r) {
+                    rx = ry = r;
                 }
-                else {
-                    d1 += signalD;
+                var fill = node.getAttribute("fill") || '';
+                if (fill == "none") {
+                    return;
                 }
+                d = `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0 z`;
+                d2.push({
+                    d: svgpath(d).rel().round(2).toString(),
+                    fill: fill
+                });
+            }
+            // SVG字体与标准图形坐标系不一致 https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty
+            const signalD = svgpath(d).rel().round(2).scale(this.svgSize * 1.8, -this.svgSize * 1.8).translate(0, ascent).toString();
+            if (!/z$/.test(signalD)) {
+                d1 += signalD + 'z';
+            }
+            else {
+                d1 += signalD;
             }
         });
         return [d1, d2];
@@ -1117,7 +1142,7 @@ const getFileList = (pattern, options = {}) => {
     });
     return promise;
 };
-function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], }) {
+function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', fontCdnUrl = '', startCodePoint = 57344, customUnicodeList, ascent = 896, descent = -128, css = true, symbol = true, html = true, fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], svgSize = (1 / 1.8), }) {
     return __awaiter(this, void 0, void 0, function* () {
         // const files = Glob.sync(src, {}) || []
         const files = yield getFileList(src);
@@ -1138,6 +1163,7 @@ function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'sv
             descent,
             startCodePoint,
             customUnicodeList,
+            svgSize,
         });
         return font.convertFonts({ dist, fontTypes, css, symbol, html, fontCdnUrl });
     });

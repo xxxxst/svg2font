@@ -50,6 +50,7 @@ export default class Font {
   public svgFont;
   public ascent;
   public descent;
+  public svgSize;
   constructor ({
     fontName = 'svg2font',
     fontFamily = 'svg2font',
@@ -58,7 +59,8 @@ export default class Font {
     ascent = 896,
     descent = -128,
     startCodePoint = 57344,
-    customUnicodeList
+	customUnicodeList,
+	svgSize
   }) {
     this.fontName = fontName
     this.fontFamily = fontFamily
@@ -66,6 +68,7 @@ export default class Font {
     this.ascent = ascent
     this.descent = descent
 
+	this.svgSize = svgSize || (1/1.8);
     this.glyphs = this.createGlyphs(glyphSvgs, startCodePoint, customUnicodeList)
     const CONFIG = _.merge(DEFAULT_CONFIG, {
       font: {
@@ -135,21 +138,46 @@ export default class Font {
   getGlyphData (data, ascent) {
     let d1 = '' // font fontcss
     let d2 = [] // symbol originD list
+	var d = '';
     const Node = new DOMParser().parseFromString(data, 'application/xml')
     Array.from(Node.documentElement.childNodes).map( (node:any) => {
       if (node.nodeName.toUpperCase() === 'PATH' && node.hasAttribute && node.hasAttribute('d')) {
+		  if(node.hasAttribute('fill') && node.getAttribute('fill') == "none") {
+		    return;
+		  }
+		  d = node.getAttribute('d');
           d2.push({
-            d: svgpath(node.getAttribute('d')).rel().round(2).toString(),
+            d: svgpath(d).rel().round(2).toString(),
             fill: node.getAttribute('fill') || ''
           })
-          // SVG字体与标准图形坐标系不一致 https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty
-          const signalD = svgpath(node.getAttribute('d')).rel().round(2).scale(1, -1).translate(0, ascent).toString()
-          if(!/z$/.test(signalD)){
-            d1 += signalD+'z'
-          } else {
-            d1 += signalD
-          }
-      }
+      } else if (node.nodeName.toLowerCase() === 'circle' && node.hasAttribute) {
+		var cx = node.getAttribute("cx");
+		var cy = node.getAttribute("cy");
+		var r = node.getAttribute("r");
+		var rx = node.getAttribute("rx");
+		var ry = node.getAttribute("ry");
+		if (r) {
+			rx = ry = r;
+		}
+		var fill = node.getAttribute("fill") || '';
+		if (fill == "none") {
+			return;
+		}
+
+		d = `M${cx-rx} ${cy}a${rx} ${ry} 0 1 0 ${2*rx} 0a${rx} ${ry} 0 1 0 ${-2*rx} 0 z`
+
+		d2.push({
+			d: svgpath(d).rel().round(2).toString(),
+			fill: fill
+		});
+	  }
+	  // SVG字体与标准图形坐标系不一致 https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty
+	  const signalD = svgpath(d).rel().round(2).scale(this.svgSize*1.8, -this.svgSize*1.8).translate(0, ascent).toString()
+	  if(!/z$/.test(signalD)){
+		d1 += signalD+'z'
+	  } else {
+		d1 += signalD
+	  }
     })
     return [d1, d2]
   }
