@@ -63,7 +63,7 @@ export default class Font {
     startCodePoint = 57344,
 	customUnicodeList,
 	svgSize,
-	copyright
+	copyright,
   }) {
     this.fontName = fontName
     this.fontFamily = fontFamily

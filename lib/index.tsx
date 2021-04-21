@@ -44,7 +44,7 @@ async function svg2Font({
 
   for(let i = 0, len = files.length; i< len; i++){
     const data:any = await readStreamToFile(files[i])
-    const glyphName = path.basename(files[i]).split('.')[0]
+    const glyphName = path.basename(files[i]).replace(/\.[^.]*$/, "");
     glyphSvgs[glyphName] = {
       path: data
     }
