@@ -200,7 +200,7 @@ export default class Font {
 
   getEOT () {
     const ttfBuffer = this.getTTF()
-    return ttf2eot(ttfBuffer)
+    return Buffer.from(ttf2eot(ttfBuffer).buffer)
   }
 
   getWOFF () {
@@ -210,7 +210,7 @@ export default class Font {
 
   getWOFF2 () {
     const ttfBuffer = this.getTTF()
-    return ttf2woff2(ttfBuffer)
+    return Buffer.from(ttf2woff2(ttfBuffer).buffer)
   }
 
   convertFonts ({dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = '', scss = true}) {

@@ -119,23 +119,22 @@ function fontTemplate(DEFAULT_CONFIG) {
 function fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs = [], fontCdnUrl = '') {
     const CSSTMPL = `
   @font-face {
-    font-family: '${fontFamily}';
-    ${fontTypes.includes('eot') && `src: url('${fontCdnUrl}${fontName}.eot'); /* IE9 */`}
+    font-family: '${fontFamily}';${fontTypes.includes('eot') ? `\n    src: url('${fontCdnUrl}${fontName}.eot'); /* IE9 */` : ""}
     src: ${fontTypes.map(item => {
         if (item == 'eot') {
-            return `url('${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype') /* IE6-IE8 */`;
+            return `url('${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype'); /* IE6-IE8 */`;
         }
         else if (item == 'woff2') {
-            return `url('${fontCdnUrl}${fontName}.woff2') format('woff2') /* chrome、firefox */`;
+            return `url('${fontCdnUrl}${fontName}.woff2') format('woff2'); /* chrome、firefox */`;
         }
         else if (item == 'woff') {
-            return `url('${fontCdnUrl}${fontName}.woff') format('woff') /* chrome、firefox */`;
+            return `url('${fontCdnUrl}${fontName}.woff') format('woff'); /* chrome、firefox */`;
         }
         else if (item == 'ttf') {
-            return `url('${fontCdnUrl}${fontName}.ttf') format('truetype') /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`;
+            return `url('${fontCdnUrl}${fontName}.ttf') format('truetype'); /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`;
         }
         else if (item == 'svg') {
-            return `url('${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg') /* iOS 4.1- */`;
+            return `url('${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg'); /* iOS 4.1- */`;
         }
     }).join(',\n\t\t')};
   }
@@ -156,23 +155,22 @@ function fontCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyph
 function fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClass, glyphs = [], fontCdnUrl = '') {
     const CSSTMPL = `
 @mixin mx-${fontFamilyClass}-face($path) {
-	font-family: '${fontFamily}';
-	${fontTypes.includes('eot') && `src: url($path + '${fontCdnUrl}${fontName}.eot'); /* IE9 */`}
+	font-family: '${fontFamily}';${fontTypes.includes('eot') ? `\n    src: url($path + '${fontCdnUrl}${fontName}.eot'); /* IE9 */` : ""}
 	src: ${fontTypes.map(item => {
         if (item == 'eot') {
-            return `url($path + '${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype') /* IE6-IE8 */`;
+            return `url($path + '${fontCdnUrl}${fontName}.eot?#iefix') format('embedded-opentype'); /* IE6-IE8 */`;
         }
         else if (item == 'woff2') {
-            return `url($path + '${fontCdnUrl}${fontName}.woff2') format('woff2') /* chrome、firefox */`;
+            return `url($path + '${fontCdnUrl}${fontName}.woff2') format('woff2'); /* chrome、firefox */`;
         }
         else if (item == 'woff') {
-            return `url($path + '${fontCdnUrl}${fontName}.woff') format('woff') /* chrome、firefox */`;
+            return `url($path + '${fontCdnUrl}${fontName}.woff') format('woff'); /* chrome、firefox */`;
         }
         else if (item == 'ttf') {
-            return `url($path + '${fontCdnUrl}${fontName}.ttf') format('truetype') /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`;
+            return `url($path + '${fontCdnUrl}${fontName}.ttf') format('truetype'); /* chrome、firefox、opera、Safari, Android, iOS 4.2+ */`;
         }
         else if (item == 'svg') {
-            return `url($path + '${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg') /* iOS 4.1- */`;
+            return `url($path + '${fontCdnUrl}${fontName}.svg#${fontFamily}') format('svg'); /* iOS 4.1- */`;
         }
     }).join(',\n\t\t ')};
 }
@@ -986,7 +984,7 @@ const DEFAULT_CONFIG = {
  * @support svg, ttf, eot, woff, woff2
  */
 class Font {
-    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList, svgSize, copyright }) {
+    constructor({ fontName = 'svg2font', fontFamily = 'svg2font', fontFamilyClass = 'font_family', glyphSvgs, ascent = 896, descent = -128, startCodePoint = 57344, customUnicodeList, svgSize, copyright, }) {
         this.fontName = fontName;
         this.fontFamily = fontFamily;
         this.fontFamilyClass = fontFamilyClass;
@@ -1111,7 +1109,7 @@ class Font {
     }
     getEOT() {
         const ttfBuffer = this.getTTF();
-        return ttf2eot(ttfBuffer);
+        return Buffer.from(ttf2eot(ttfBuffer).buffer);
     }
     getWOFF() {
         const ttfBuffer = this.getTTF();
@@ -1119,7 +1117,7 @@ class Font {
     }
     getWOFF2() {
         const ttfBuffer = this.getTTF();
-        return ttf2woff2(ttfBuffer);
+        return Buffer.from(ttf2woff2(ttfBuffer).buffer);
     }
     convertFonts({ dist = './', fontTypes = ['eot', 'woff2', 'woff', 'ttf', 'svg'], css = true, symbol = true, html = true, fontCdnUrl = '', scss = true }) {
         const fontName = this.fontName;
@@ -1191,7 +1189,7 @@ function svg2Font({ src = '', dist = '', fontName = 'svg2font', fontFamily = 'sv
         const glyphSvgs = {};
         for (let i = 0, len = files.length; i < len; i++) {
             const data = yield readStreamToFile(files[i]);
-            const glyphName = path$1.basename(files[i]).split('.')[0];
+            const glyphName = path$1.basename(files[i]).replace(/\.[^.]*$/, "");
             glyphSvgs[glyphName] = {
                 path: data
             };
