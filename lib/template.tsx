@@ -82,7 +82,7 @@ export function fontSCSSTemplate(fontTypes, fontName, fontFamily, fontFamilyClas
 	&:before { display: inline-block; vertical-align: top; }
 }
 ${ glyphs.map(({glyphName, unicode}) => `
-%ex-${fontName}-${glyphName} { @extend %ex-font-family; &:before { content: "\\${unicode}"; } }`).join('\n')}`
+%ex-${fontName}-${glyphName} { @extend %ex-${fontFamilyClass}; &:before { content: "\\${unicode}"; } }`).join('\n')}`
 	return CSSTMPL
   }
 
